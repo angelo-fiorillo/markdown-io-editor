@@ -7,7 +7,7 @@ const loadBtn = document.getElementById('load-btn');
 const saveBtn = document.getElementById('save-btn');
 const displaySelect = document.getElementById('display-select');
 
-unction renderMarkdown() {
+function renderMarkdown() {
     console.log("renderMarkdown chiamata");
     let frontMatter = '';
     let ctaButtons = '';
