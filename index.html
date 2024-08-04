@@ -23,17 +23,26 @@
             flex: 1;
             resize: none;
             padding: 10px;
+            min-height: 100px;
         }
         #preview-container {
             flex: 1;
-            overflow: auto;
+            overflow: hidden;
             padding: 10px;
         }
         #preview-frame {
             border: 1px solid #ccc;
             margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
         }
-        #preview-content, #preview-buttons {
+        #preview-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        #preview-buttons {
             padding: 20px;
         }
         #controls {
@@ -83,10 +92,6 @@
         <button id="save-image-btn">Salva Immagine</button>
         <button id="load-btn">Carica File</button>
         <button id="save-btn">Salva File</button>
-        <select id="display-select">
-            <option value="mobile">Mobile</option>
-            <option value="tablet">Tablet</option>
-        </select>
     </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/2.0.3/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
