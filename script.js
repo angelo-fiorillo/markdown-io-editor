@@ -96,7 +96,22 @@ copyBtn.addEventListener('click', () => {
 });
 
 saveImageBtn.addEventListener('click', () => {
-    html2canvas(document.getElementById('preview-frame')).then(canvas => {
+    const previewFrame = document.getElementById('preview-frame');
+    const originalOverflow = previewFrame.style.overflow;
+    const originalHeight = previewFrame.style.height;
+    
+    // Rimuovi temporaneamente la scrollbar e imposta l'altezza al contenuto completo
+    previewFrame.style.overflow = 'visible';
+    previewFrame.style.height = 'auto';
+
+    html2canvas(previewFrame, {
+        height: previewFrame.scrollHeight,
+        windowHeight: previewFrame.scrollHeight
+    }).then(canvas => {
+        // Ripristina le proprietà originali
+        previewFrame.style.overflow = originalOverflow;
+        previewFrame.style.height = originalHeight;
+
         const link = document.createElement('a');
         link.download = 'preview.png';
         link.href = canvas.toDataURL();
