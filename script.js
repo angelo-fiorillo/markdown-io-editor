@@ -6,7 +6,6 @@ const copyBtn = document.getElementById('copy-btn');
 const saveImageBtn = document.getElementById('save-image-btn');
 const loadBtn = document.getElementById('load-btn');
 const saveBtn = document.getElementById('save-btn');
-const displaySelect = document.getElementById('display-select');
 
 function renderMarkdown() {
     let ctaButtons = '';
@@ -36,15 +35,22 @@ function generateCTAButtons(data) {
 }
 
 function convertMarkdownToExport(markdown) {
-    return markdown.replace(/(?<!\n)\n(?!\n)/g, '  \n').replace(/\n\n/g, '\n\n');
+    return markdown.replace(/(?<!\n)\n(?!\n)/g, '  \\n').replace(/\n\n/g, '\\n\\n');
 }
 
 function convertMarkdownFromImport(markdown) {
-    return markdown.replace(/  \n/g, '\n').replace(/\n\n/g, '\n\n');
+    return markdown.replace(/  \\n/g, '\n').replace(/\\n\\n/g, '\n\n');
 }
 
-frontMatterInput.addEventListener('input', renderMarkdown);
-markdownInput.addEventListener('input', renderMarkdown);
+frontMatterInput.addEventListener('input', () => {
+    renderMarkdown();
+    localStorage.setItem('frontMatter', frontMatterInput.value);
+});
+
+markdownInput.addEventListener('input', () => {
+    renderMarkdown();
+    localStorage.setItem('markdown', markdownInput.value);
+});
 
 markdownInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
@@ -66,6 +72,7 @@ markdownInput.addEventListener('keydown', (e) => {
             markdownInput.selectionStart = markdownInput.selectionEnd = start + 2;
         }
         renderMarkdown();
+        localStorage.setItem('markdown', markdownInput.value);
     }
 });
 
@@ -98,6 +105,8 @@ loadBtn.addEventListener('click', () => {
             frontMatterInput.value = frontMatter ? frontMatter.replace(/^---\n|---\n$/g, '') : '';
             markdownInput.value = convertMarkdownFromImport(markdown.trim());
             renderMarkdown();
+            localStorage.setItem('frontMatter', frontMatterInput.value);
+            localStorage.setItem('markdown', markdownInput.value);
         };
         reader.readAsText(file);
     };
@@ -111,23 +120,6 @@ saveBtn.addEventListener('click', () => {
     link.download = 'document.md';
     link.href = URL.createObjectURL(blob);
     link.click();
-});
-
-displaySelect.addEventListener('change', () => {
-    const selectedDisplay = displaySelect.value;
-    const previewFrame = document.getElementById('preview-frame');
-    const scaleFactor = 0.3;
-
-    switch (selectedDisplay) {
-        case 'mobile':
-            previewFrame.style.width = `${1080 * scaleFactor}px`;
-            previewFrame.style.height = `${2340 * scaleFactor}px`;
-            break;
-        case 'tablet':
-            previewFrame.style.width = `${2340 * scaleFactor}px`;
-            previewFrame.style.height = `${1080 * scaleFactor}px`;
-            break;
-    }
 });
 
 marked.setOptions({
@@ -190,16 +182,11 @@ function validateMarkdown(markdown) {
     return warnings;
 }
 
-// Inizializza la visualizzazione mobile come default
-displaySelect.value = 'mobile';
-displaySelect.dispatchEvent(new Event('change'));
-
 // Gestione degli splitter
 const verticalSplitter = document.querySelector('.splitter.vertical');
 const horizontalSplitter = document.querySelector('.splitter.horizontal');
 const editor = document.getElementById('editor');
 const previewContainer = document.getElementById('preview-container');
-const frontMatter = document.getElementById('front-matter');
 
 let isResizingVertical = false;
 let isResizingHorizontal = false;
@@ -227,10 +214,11 @@ function handleVerticalResize(e) {
 
 function handleHorizontalResize(e) {
     if (!isResizingHorizontal) return;
-    const newFrontMatterHeight = e.clientY - editor.offsetTop;
-    if (newFrontMatterHeight > 100 && newFrontMatterHeight < editor.offsetHeight - 100) {
-        frontMatter.style.height = `${newFrontMatterHeight}px`;
-        markdownInput.style.height = `${editor.offsetHeight - newFrontMatterHeight - 10}px`; // 10px per lo splitter
+    const editorRect = editor.getBoundingClientRect();
+    const newFrontMatterHeight = e.clientY - editorRect.top;
+    if (newFrontMatterHeight > 100 && newFrontMatterHeight < editorRect.height - 100) {
+        frontMatterInput.style.height = `${newFrontMatterHeight}px`;
+        markdownInput.style.height = `${editorRect.height - newFrontMatterHeight - 10}px`; // 10px per lo splitter
     }
 }
 
@@ -244,7 +232,7 @@ function stopResize() {
 
 function saveSplitterPositions() {
     localStorage.setItem('editorWidth', editor.style.width);
-    localStorage.setItem('frontMatterHeight', frontMatter.style.height);
+    localStorage.setItem('frontMatterHeight', frontMatterInput.style.height);
 }
 
 function loadSplitterPositions() {
@@ -252,10 +240,25 @@ function loadSplitterPositions() {
     const savedFrontMatterHeight = localStorage.getItem('frontMatterHeight');
     if (savedEditorWidth) editor.style.width = savedEditorWidth;
     if (savedFrontMatterHeight) {
-        frontMatter.style.height = savedFrontMatterHeight;
-        markdownInput.style.height = `${editor.offsetHeight - parseInt(savedFrontMatterHeight) - 10}px`;
+        frontMatterInput.style.height = savedFrontMatterHeight;
+        const editorRect = editor.getBoundingClientRect();
+        markdownInput.style.height = `${editorRect.height - parseInt(savedFrontMatterHeight) - 10}px`;
     }
 }
 
+function loadSavedContent() {
+    const savedFrontMatter = localStorage.getItem('frontMatter');
+    const savedMarkdown = localStorage.getItem('markdown');
+    if (savedFrontMatter) frontMatterInput.value = savedFrontMatter;
+    if (savedMarkdown) markdownInput.value = savedMarkdown;
+}
+
 loadSplitterPositions();
+loadSavedContent();
 renderMarkdown();
+
+// Imposta le dimensioni iniziali del preview-frame
+const previewFrame = document.getElementById('preview-frame');
+const scaleFactor = 0.3;
+previewFrame.style.width = `${1080 * scaleFactor}px`;
+previewFrame.style.height = `${2340 * scaleFactor}px`;
