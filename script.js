@@ -35,11 +35,23 @@ function generateCTAButtons(data) {
 }
 
 function convertMarkdownToExport(markdown) {
-    return markdown.replace(/(?<!\n)\n(?!\n)/g, '  \\n').replace(/\n\n/g, '\\n\\n');
+    return markdown
+        .replace(/"/g, '\\"') // Escape delle doppie virgolette
+        .replace(/(?<!\n)\n(?!\n)/g, '  \\n')
+        .replace(/\n\n/g, '\\n\\n')
+        .replace(/^(#{1,6}.*?)$/gm, '$1\\n') // Aggiunge \n alla fine dei titoli
+        .replace(/^([*-] .*?)$/gm, '$1\\n') // Aggiunge \n alla fine dei bullet points
+        .replace(/\n/g, '\\n'); // Converte tutti i newline rimanenti in \n
 }
 
 function convertMarkdownFromImport(markdown) {
-    return markdown.replace(/  \\n/g, '\n').replace(/\\n\\n/g, '\n\n');
+    return markdown
+        .replace(/\\"(.*?)\\"/g, '"$1"') // Rimuove l'escape dalle doppie virgolette
+        .replace(/  \\n/g, '\n')
+        .replace(/\\n\\n/g, '\n\n')
+        .replace(/(#{1,6}.*?)\\n/g, '$1\n') // Rimuove \n alla fine dei titoli
+        .replace(/([*-] .*?)\\n/g, '$1\n') // Rimuove \n alla fine dei bullet points
+        .replace(/\\n/g, '\n'); // Converte tutti i \n rimanenti in newline effettivi
 }
 
 frontMatterInput.addEventListener('input', () => {
@@ -77,7 +89,7 @@ markdownInput.addEventListener('keydown', (e) => {
 });
 
 copyBtn.addEventListener('click', () => {
-    const fullContent = `---\n${frontMatterInput.value}\n---\n\n${convertMarkdownToExport(markdownInput.value)}`;
+    const fullContent = `---${convertMarkdownToExport(frontMatterInput.value)}---\\n${convertMarkdownToExport(markdownInput.value)}`;
     navigator.clipboard.writeText(fullContent).then(() => {
         alert('Contenuto copiato nella clipboard!');
     });
@@ -102,7 +114,7 @@ loadBtn.addEventListener('click', () => {
         reader.onload = event => {
             const content = event.target.result;
             const [, frontMatter, markdown] = content.match(/^(---\n[\s\S]*?\n---\n)?([\s\S]*)$/);
-            frontMatterInput.value = frontMatter ? frontMatter.replace(/^---\n|---\n$/g, '') : '';
+            frontMatterInput.value = frontMatter ? convertMarkdownFromImport(frontMatter.replace(/^---\n|---\n$/g, '')) : '';
             markdownInput.value = convertMarkdownFromImport(markdown.trim());
             renderMarkdown();
             localStorage.setItem('frontMatter', frontMatterInput.value);
@@ -114,7 +126,7 @@ loadBtn.addEventListener('click', () => {
 });
 
 saveBtn.addEventListener('click', () => {
-    const content = `---\n${frontMatterInput.value}\n---\n\n${convertMarkdownToExport(markdownInput.value)}`;
+    const content = `---${convertMarkdownToExport(frontMatterInput.value)}---\\n${convertMarkdownToExport(markdownInput.value)}`;
     const blob = new Blob([content], { type: 'text/markdown' });
     const link = document.createElement('a');
     link.download = 'document.md';
