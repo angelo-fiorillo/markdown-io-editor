@@ -9,7 +9,6 @@ const saveBtn = document.getElementById('save-btn');
 const displaySelect = document.getElementById('display-select');
 
 function renderMarkdown() {
-    console.log("renderMarkdown chiamata");
     let ctaButtons = '';
     try {
         const yamlData = jsyaml.load(frontMatterInput.value);
@@ -36,26 +35,48 @@ function generateCTAButtons(data) {
     return buttons;
 }
 
-frontMatterInput.addEventListener('input', () => {
-    console.log("Front-matter input rilevato");
-    renderMarkdown();
-});
+function convertMarkdownToExport(markdown) {
+    return markdown.replace(/(?<!\n)\n(?!\n)/g, '  \n').replace(/\n\n/g, '\n\n');
+}
 
-markdownInput.addEventListener('input', () => {
-    console.log("Markdown input rilevato");
-    renderMarkdown();
+function convertMarkdownFromImport(markdown) {
+    return markdown.replace(/  \n/g, '\n').replace(/\n\n/g, '\n\n');
+}
+
+frontMatterInput.addEventListener('input', renderMarkdown);
+markdownInput.addEventListener('input', renderMarkdown);
+
+markdownInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        if (e.shiftKey) {
+            // Shift+Enter: inserisce un a-capo semplice
+            e.preventDefault();
+            const start = markdownInput.selectionStart;
+            const end = markdownInput.selectionEnd;
+            const value = markdownInput.value;
+            markdownInput.value = value.substring(0, start) + '\n' + value.substring(end);
+            markdownInput.selectionStart = markdownInput.selectionEnd = start + 1;
+        } else {
+            // Enter: inserisce un a-capo con nuovo paragrafo
+            e.preventDefault();
+            const start = markdownInput.selectionStart;
+            const end = markdownInput.selectionEnd;
+            const value = markdownInput.value;
+            markdownInput.value = value.substring(0, start) + '\n\n' + value.substring(end);
+            markdownInput.selectionStart = markdownInput.selectionEnd = start + 2;
+        }
+        renderMarkdown();
+    }
 });
 
 copyBtn.addEventListener('click', () => {
-    console.log("Copia Markdown cliccato");
-    const fullContent = `---\n${frontMatterInput.value}\n---\n\n${markdownInput.value}`;
+    const fullContent = `---\n${frontMatterInput.value}\n---\n\n${convertMarkdownToExport(markdownInput.value)}`;
     navigator.clipboard.writeText(fullContent).then(() => {
         alert('Contenuto copiato nella clipboard!');
     });
 });
 
 saveImageBtn.addEventListener('click', () => {
-    console.log("Salva Immagine cliccato");
     html2canvas(document.getElementById('preview-frame')).then(canvas => {
         const link = document.createElement('a');
         link.download = 'preview.png';
@@ -65,7 +86,6 @@ saveImageBtn.addEventListener('click', () => {
 });
 
 loadBtn.addEventListener('click', () => {
-    console.log("Carica File cliccato");
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = '.md';
@@ -76,7 +96,7 @@ loadBtn.addEventListener('click', () => {
             const content = event.target.result;
             const [, frontMatter, markdown] = content.match(/^(---\n[\s\S]*?\n---\n)?([\s\S]*)$/);
             frontMatterInput.value = frontMatter ? frontMatter.replace(/^---\n|---\n$/g, '') : '';
-            markdownInput.value = markdown.trim();
+            markdownInput.value = convertMarkdownFromImport(markdown.trim());
             renderMarkdown();
         };
         reader.readAsText(file);
@@ -85,8 +105,7 @@ loadBtn.addEventListener('click', () => {
 });
 
 saveBtn.addEventListener('click', () => {
-    console.log("Salva File cliccato");
-    const content = `---\n${frontMatterInput.value}\n---\n\n${markdownInput.value}`;
+    const content = `---\n${frontMatterInput.value}\n---\n\n${convertMarkdownToExport(markdownInput.value)}`;
     const blob = new Blob([content], { type: 'text/markdown' });
     const link = document.createElement('a');
     link.download = 'document.md';
@@ -95,19 +114,18 @@ saveBtn.addEventListener('click', () => {
 });
 
 displaySelect.addEventListener('change', () => {
-    console.log("Display cambiato");
     const selectedDisplay = displaySelect.value;
     const previewFrame = document.getElementById('preview-frame');
-    const scaleFactor = 0.3; // Modifica questo valore per adattare la scala
+    const scaleFactor = 0.3;
 
     switch (selectedDisplay) {
         case 'mobile':
-            previewFrame.style.width = `${2340 * scaleFactor}px`;
-            previewFrame.style.height = `${1080 * scaleFactor}px`;
-            break;
-        case 'tablet':
             previewFrame.style.width = `${1080 * scaleFactor}px`;
             previewFrame.style.height = `${2340 * scaleFactor}px`;
+            break;
+        case 'tablet':
+            previewFrame.style.width = `${2340 * scaleFactor}px`;
+            previewFrame.style.height = `${1080 * scaleFactor}px`;
             break;
     }
 });
@@ -176,6 +194,68 @@ function validateMarkdown(markdown) {
 displaySelect.value = 'mobile';
 displaySelect.dispatchEvent(new Event('change'));
 
-renderMarkdown();
+// Gestione degli splitter
+const verticalSplitter = document.querySelector('.splitter.vertical');
+const horizontalSplitter = document.querySelector('.splitter.horizontal');
+const editor = document.getElementById('editor');
+const previewContainer = document.getElementById('preview-container');
+const frontMatter = document.getElementById('front-matter');
 
-console.log("Script caricato completamente");
+let isResizingVertical = false;
+let isResizingHorizontal = false;
+
+verticalSplitter.addEventListener('mousedown', (e) => {
+    isResizingVertical = true;
+    document.addEventListener('mousemove', handleVerticalResize);
+    document.addEventListener('mouseup', stopResize);
+});
+
+horizontalSplitter.addEventListener('mousedown', (e) => {
+    isResizingHorizontal = true;
+    document.addEventListener('mousemove', handleHorizontalResize);
+    document.addEventListener('mouseup', stopResize);
+});
+
+function handleVerticalResize(e) {
+    if (!isResizingVertical) return;
+    const newEditorWidth = e.clientX;
+    const maxWidth = window.innerWidth - previewContainer.offsetWidth - 20; // 20px di margine
+    if (newEditorWidth > 300 && newEditorWidth < maxWidth) {
+        editor.style.width = `${newEditorWidth}px`;
+    }
+}
+
+function handleHorizontalResize(e) {
+    if (!isResizingHorizontal) return;
+    const newFrontMatterHeight = e.clientY - editor.offsetTop;
+    if (newFrontMatterHeight > 100 && newFrontMatterHeight < editor.offsetHeight - 100) {
+        frontMatter.style.height = `${newFrontMatterHeight}px`;
+        markdownInput.style.height = `${editor.offsetHeight - newFrontMatterHeight - 10}px`; // 10px per lo splitter
+    }
+}
+
+function stopResize() {
+    isResizingVertical = false;
+    isResizingHorizontal = false;
+    document.removeEventListener('mousemove', handleVerticalResize);
+    document.removeEventListener('mousemove', handleHorizontalResize);
+    saveSplitterPositions();
+}
+
+function saveSplitterPositions() {
+    localStorage.setItem('editorWidth', editor.style.width);
+    localStorage.setItem('frontMatterHeight', frontMatter.style.height);
+}
+
+function loadSplitterPositions() {
+    const savedEditorWidth = localStorage.getItem('editorWidth');
+    const savedFrontMatterHeight = localStorage.getItem('frontMatterHeight');
+    if (savedEditorWidth) editor.style.width = savedEditorWidth;
+    if (savedFrontMatterHeight) {
+        frontMatter.style.height = savedFrontMatterHeight;
+        markdownInput.style.height = `${editor.offsetHeight - parseInt(savedFrontMatterHeight) - 10}px`;
+    }
+}
+
+loadSplitterPositions();
+renderMarkdown();
