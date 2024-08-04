@@ -1,6 +1,7 @@
 const frontMatterInput = document.getElementById('front-matter');
 const markdownInput = document.getElementById('markdown-input');
-const preview = document.getElementById('preview');
+const previewContent = document.getElementById('preview-content');
+const previewButtons = document.getElementById('preview-buttons');
 const copyBtn = document.getElementById('copy-btn');
 const saveImageBtn = document.getElementById('save-image-btn');
 const loadBtn = document.getElementById('load-btn');
@@ -9,7 +10,6 @@ const displaySelect = document.getElementById('display-select');
 
 function renderMarkdown() {
     console.log("renderMarkdown chiamata");
-    let frontMatter = '';
     let ctaButtons = '';
     try {
         const yamlData = jsyaml.load(frontMatterInput.value);
@@ -21,8 +21,8 @@ function renderMarkdown() {
     }
     
     const htmlContent = marked(markdownInput.value);
-    document.getElementById('preview-content').innerHTML = htmlContent;
-    document.getElementById('preview-buttons').innerHTML = ctaButtons;
+    previewContent.innerHTML = htmlContent;
+    previewButtons.innerHTML = ctaButtons;
 }
 
 function generateCTAButtons(data) {
@@ -48,7 +48,7 @@ markdownInput.addEventListener('input', () => {
 
 copyBtn.addEventListener('click', () => {
     console.log("Copia Markdown cliccato");
-    const fullContent = `${frontMatterInput.value}\n---\n${markdownInput.value}`;
+    const fullContent = `---\n${frontMatterInput.value}\n---\n\n${markdownInput.value}`;
     navigator.clipboard.writeText(fullContent).then(() => {
         alert('Contenuto copiato nella clipboard!');
     });
@@ -56,7 +56,7 @@ copyBtn.addEventListener('click', () => {
 
 saveImageBtn.addEventListener('click', () => {
     console.log("Salva Immagine cliccato");
-    html2canvas(preview).then(canvas => {
+    html2canvas(document.getElementById('preview-frame')).then(canvas => {
         const link = document.createElement('a');
         link.download = 'preview.png';
         link.href = canvas.toDataURL();
@@ -98,7 +98,7 @@ displaySelect.addEventListener('change', () => {
     console.log("Display cambiato");
     const selectedDisplay = displaySelect.value;
     const previewFrame = document.getElementById('preview-frame');
-    const scaleFactor = 0.5; // Modifica questo valore per adattare la scala
+    const scaleFactor = 0.3; // Modifica questo valore per adattare la scala
 
     switch (selectedDisplay) {
         case 'mobile':
