@@ -30,12 +30,23 @@ function renderMarkdown() {
 function generateCTAButtons(data) {
     let buttons = '';
     if (data.cta_1) {
-        buttons += `<a href="${data.cta_1.action}" class="io-button">${data.cta_1.text}</a>`;
+        buttons += generateCTAButton(data.cta_1);
     }
     if (data.cta_2) {
-        buttons += `<a href="${data.cta_2.action}" class="io-button">${data.cta_2.text}</a>`;
+        buttons += generateCTAButton(data.cta_2);
     }
     return buttons;
+}
+
+function generateCTAButton(cta) {
+    let action = cta.action;
+    let onclickAttr = '';
+    if (action.startsWith('iohandledlink://')) {
+        const targetUrl = action.replace('iohandledlink://', '');
+        onclickAttr = `onclick="window.open('${targetUrl}', '_blank', 'width=800,height=600'); return false;"`;
+        action = targetUrl;
+    }
+    return `<a href="${action}" class="io-button" ${onclickAttr}>${cta.text}</a>`;
 }
 
 function adjustContentHeight() {
@@ -45,7 +56,7 @@ function adjustContentHeight() {
 }
 
 copyBtn.addEventListener('click', () => {
-    const textToCopy = frontMatterInput.value + '\n---\n' + markdownInput.value;
+    const textToCopy = `---\n${frontMatterInput.value.trim()}\n---\n${markdownInput.value.trim()}`;
     navigator.clipboard.writeText(textToCopy).then(() => {
         alert('Contenuto copiato negli appunti!');
     });
@@ -73,9 +84,14 @@ loadBtn.addEventListener('change', (event) => {
         const reader = new FileReader();
         reader.onload = (e) => {
             const content = e.target.result;
-            const [frontMatter, markdown] = content.split('---\n');
-            frontMatterInput.value = frontMatter.trim();
-            markdownInput.value = markdown.trim();
+            const parts = content.split('---\n');
+            if (parts.length >= 3) {
+                frontMatterInput.value = parts[1].trim();
+                markdownInput.value = parts.slice(2).join('---\n').trim();
+            } else {
+                frontMatterInput.value = '';
+                markdownInput.value = content.trim();
+            }
             renderMarkdown();
         };
         reader.readAsText(file);
@@ -83,7 +99,7 @@ loadBtn.addEventListener('change', (event) => {
 });
 
 saveBtn.addEventListener('click', () => {
-    const content = frontMatterInput.value + '\n---\n' + markdownInput.value;
+    const content = `---\n${frontMatterInput.value.trim()}\n---\n${markdownInput.value.trim()}`;
     const blob = new Blob([content], { type: 'text/markdown' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
