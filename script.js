@@ -19,9 +19,9 @@ function renderMarkdown() {
         console.error('Errore nel parsing del front-matter YAML:', e);
     }
     
-    const htmlContent = marked(markdownInput.value);
-    previewContent.innerHTML = htmlContent;
-    previewButtons.innerHTML = ctaButtons;
+    const htmlContent = marked(markdownInput.value.replace(/\n{2,}/g, '</p><p>').replace(/  \n/g, '<br>'));
+    previewContent.innerHTML = `<p>${htmlContent}</p>`;
+    previewButtons.innerHTML = ctaButtons || '<div class="error-message">Errore nel front matter!</div>';
 
     // Aggiusta l'altezza del contenuto in base alla presenza di CTA
     adjustContentHeight();
@@ -30,15 +30,17 @@ function renderMarkdown() {
 function generateCTAButtons(data) {
     let buttons = '';
     if (data.cta_1) {
-        buttons += generateCTAButton(data.cta_1);
-    }
-    if (data.cta_2) {
-        buttons += generateCTAButton(data.cta_2);
+        buttons += generateCTAButton(data.cta_1, 'primary');
+        if (data.cta_2) {
+            buttons += generateCTAButton(data.cta_2, 'secondary');
+        }
+    } else if (data.cta_2) {
+        return ''; // Questo triggererà il messaggio di errore
     }
     return buttons;
 }
 
-function generateCTAButton(cta) {
+function generateCTAButton(cta, type) {
     let action = cta.action;
     let onclickAttr = '';
     if (action.startsWith('iohandledlink://')) {
@@ -46,7 +48,7 @@ function generateCTAButton(cta) {
         onclickAttr = `onclick="window.open('${targetUrl}', '_blank', 'width=800,height=600'); return false;"`;
         action = targetUrl;
     }
-    return `<a href="${action}" class="io-button" ${onclickAttr}>${cta.text}</a>`;
+    return `<a href="${action}" class="io-button io-button-${type}" ${onclickAttr}>${cta.text}</a>`;
 }
 
 function adjustContentHeight() {
@@ -56,7 +58,7 @@ function adjustContentHeight() {
 }
 
 copyBtn.addEventListener('click', () => {
-    const textToCopy = `---\n${frontMatterInput.value.trim()}\n---\n${markdownInput.value.trim()}`;
+    const textToCopy = `---\n${frontMatterInput.value.trim()}\n---\n${formatMarkdown(markdownInput.value)}`;
     navigator.clipboard.writeText(textToCopy).then(() => {
         alert('Contenuto copiato negli appunti!');
     });
@@ -87,10 +89,10 @@ loadBtn.addEventListener('change', (event) => {
             const parts = content.split('---\n');
             if (parts.length >= 3) {
                 frontMatterInput.value = parts[1].trim();
-                markdownInput.value = parts.slice(2).join('---\n').trim();
+                markdownInput.value = unformatMarkdown(parts.slice(2).join('---\n').trim());
             } else {
                 frontMatterInput.value = '';
-                markdownInput.value = content.trim();
+                markdownInput.value = unformatMarkdown(content.trim());
             }
             renderMarkdown();
         };
@@ -99,13 +101,26 @@ loadBtn.addEventListener('change', (event) => {
 });
 
 saveBtn.addEventListener('click', () => {
-    const content = `---\n${frontMatterInput.value.trim()}\n---\n${markdownInput.value.trim()}`;
+    const content = `---\n${frontMatterInput.value.trim()}\n---\n${formatMarkdown(markdownInput.value)}`;
     const blob = new Blob([content], { type: 'text/markdown' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.download = 'document.md';
     link.click();
 });
+
+function formatMarkdown(text) {
+    return text.replace(/"/g, '\\"')
+               .replace(/\n{2,}/g, '\\n\\n')
+               .replace(/  \n/g, '  \\n')
+               .replace(/\n/g, ' ');
+}
+
+function unformatMarkdown(text) {
+    return text.replace(/\\"/g, '"')
+               .replace(/\\n\\n/g, '\n\n')
+               .replace(/  \\n/g, '  \n');
+}
 
 function loadSplitterPositions() {
     const horizontalSplit = localStorage.getItem('horizontalSplit');
@@ -156,3 +171,18 @@ markdownInput.addEventListener('input', saveContent);
 
 // Gestione del ridimensionamento
 window.addEventListener('resize', adjustContentHeight);
+
+// Gestione degli "a-capo"
+markdownInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        if (!e.shiftKey) {
+            e.preventDefault();
+            const start = this.selectionStart;
+            const end = this.selectionEnd;
+            const value = this.value;
+            this.value = value.slice(0, start) + '\n\n' + value.slice(end);
+            this.selectionStart = this.selectionEnd = start + 2;
+            renderMarkdown();
+        }
+    }
+});
