@@ -110,7 +110,7 @@ saveBtn.addEventListener('click', () => {
 function formatFullMarkdown() {
     let result = '';
     if (frontMatterInput.value.trim()) {
-        result += `---\n${formatFrontMatter(frontMatterInput.value)}---\n`;
+        result += `---\\n${formatFrontMatter(frontMatterInput.value)}---\\n`;
     }
     result += formatMarkdown(markdownInput.value);
     return result.replace(/\n/g, ' ');
