@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editor Markdown con Anteprima</title>
+    <title>IO Markdown Editor</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/2.0.3/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.3.2/html2canvas.min.js"></script>
@@ -16,81 +16,61 @@
         }
         #editor {
             display: flex;
-            height: 100vh;
+            flex-direction: column;
+            height: calc(100vh - 60px); /* Riduciamo l'altezza per lasciare spazio ai controlli */
         }
         .splitter {
             display: flex;
             flex: 1;
         }
-        .horizontal {
-            flex-direction: column;
-        }
         .vertical {
             flex-direction: row;
         }
+        .horizontal {
+            flex-direction: column;
+        }
         textarea {
+            flex: 1;
             resize: none;
-            border: 1px solid #ccc;
             padding: 10px;
-            font-family: monospace;
-        }
-        #front-matter {
-            height: 20%;
-        }
-        #markdown-input {
-            height: 80%;
         }
         #preview-container {
             flex: 1;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            background-color: #f0f0f0;
+            justify-content: flex-start;
             padding: 20px;
+            overflow-y: auto;
         }
         #preview-frame {
             border: 1px solid #ccc;
-            background-color: white;
             overflow: hidden;
-            display: flex;
-            flex-direction: column;
         }
         #preview-content {
-            padding: 16px;
-            font-family: 'Roboto', sans-serif;
-            font-size: 18px;
-            line-height: 1.5;
-            color: #24292e;
             overflow-y: auto;
-            flex-grow: 1;
+            padding: 16px;
         }
         #preview-buttons {
-            width: calc(100% - 32px);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            width: 100%;
+            text-align: center;
             padding: 16px;
-            background-color: #f7f7f7;
         }
         .io-button {
             display: inline-block;
             padding: 10px 20px;
-            margin: 5px 0;
-            border-radius: 4px;
+            margin: 0 8px 16px;
             text-decoration: none;
-            font-weight: bold;
-            text-align: center;
-            width: 100%;
+            color: #fff;
+            border-radius: 4px;
         }
         .io-button-primary {
             background-color: #0073e6;
-            color: white;
         }
         .io-button-secondary {
-            background-color: white;
-            color: black;
-            border: 2px solid #0073e6;
+            background-color: #f2f2f2;
+            color: #0073e6;
+            border: 1px solid #0073e6;
         }
         #controls {
             display: flex;
@@ -101,9 +81,12 @@
         #controls button {
             padding: 5px 10px;
         }
-        .error-message {
-            color: red;
-            font-weight: bold;
+        .copyright {
+            position: fixed;
+            bottom: 5px;
+            right: 5px;
+            font-size: 10px;
+            color: #888;
         }
     </style>
 </head>
@@ -125,9 +108,11 @@
     <div id="controls">
         <button id="copy-btn">Copia Markdown</button>
         <button id="save-image-btn">Salva Immagine</button>
-        <input type="file" id="load-btn" accept=".md">
+        <input type="file" id="load-btn" accept=".md" style="display: none;">
+        <button onclick="document.getElementById('load-btn').click()">Carica File</button>
         <button id="save-btn">Salva File</button>
     </div>
+    <div class="copyright">IO Markdown Editor - by Angelo Fiorillo 2024</div>
     <script src="script.js"></script>
 </body>
 </html>
