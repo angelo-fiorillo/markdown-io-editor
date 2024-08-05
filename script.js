@@ -57,7 +57,7 @@ function adjustContentHeight() {
 }
 
 copyBtn.addEventListener('click', () => {
-    const textToCopy = `${formatFrontMatter(frontMatterInput.value)}\n${formatMarkdown(markdownInput.value)}`;
+    const textToCopy = `${formatFrontMatter(frontMatterInput.value)}\\n${formatMarkdown(markdownInput.value)}`;
     navigator.clipboard.writeText(textToCopy).then(() => {
         alert('Contenuto copiato negli appunti!');
     });
@@ -84,10 +84,10 @@ loadBtn.addEventListener('change', (event) => {
         const reader = new FileReader();
         reader.onload = (e) => {
             const content = e.target.result;
-            const parts = content.split('---\n');
+            const parts = content.split('---\\n');
             if (parts.length >= 3) {
                 frontMatterInput.value = unformatFrontMatter(parts[1].trim());
-                markdownInput.value = unformatMarkdown(parts.slice(2).join('---\n').trim());
+                markdownInput.value = unformatMarkdown(parts.slice(2).join('---\\n').trim());
             } else {
                 frontMatterInput.value = '';
                 markdownInput.value = unformatMarkdown(content.trim());
@@ -99,7 +99,7 @@ loadBtn.addEventListener('change', (event) => {
 });
 
 saveBtn.addEventListener('click', () => {
-    const content = `${formatFrontMatter(frontMatterInput.value)}\n${formatMarkdown(markdownInput.value)}`;
+    const content = `${formatFrontMatter(frontMatterInput.value)}\\n${formatMarkdown(markdownInput.value)}`;
     const blob = new Blob([content], { type: 'text/markdown' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
@@ -108,7 +108,7 @@ saveBtn.addEventListener('click', () => {
 });
 
 function formatFrontMatter(text) {
-    return `---\n${text.trim().replace(/\n/g, '\\n')}\\n---`;
+    return `---\\n${text.trim().replace(/\n/g, '\\n')}\\n---`;
 }
 
 function unformatFrontMatter(text) {
