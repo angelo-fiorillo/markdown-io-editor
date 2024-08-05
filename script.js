@@ -84,7 +84,7 @@ loadBtn.addEventListener('change', (event) => {
         const reader = new FileReader();
         reader.onload = (e) => {
             const content = e.target.result;
-            const parts = content.split('\n---\n');
+            const parts = content.split('\\n---\\n');
             alert(parts.length);
             if (parts.length == 2) {
                 frontMatterInput.value = unformatFrontMatter(parts[0].trim());
