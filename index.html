@@ -31,6 +31,8 @@
             width: 100%;
             height: 50%;
             resize: none;
+            white-space: pre-wrap;
+            word-wrap: break-word;
         }
         #preview-container {
             display: flex;
@@ -56,6 +58,8 @@
         #preview-buttons {
             padding: 16px;
             background-color: #f0f0f0;
+            display: flex;
+            flex-direction: column;
         }
         #controls {
             height: 50px;
@@ -65,13 +69,26 @@
             background-color: #f0f0f0;
         }
         .io-button {
-            display: inline-block;
+            display: block;
             padding: 10px 20px;
-            background-color: #0073e6;
-            color: white;
             text-decoration: none;
             border-radius: 4px;
-            margin: 5px;
+            margin: 8px 16px;
+            text-align: center;
+        }
+        .io-button-primary {
+            background-color: #0073e6;
+            color: white;
+        }
+        .io-button-secondary {
+            background-color: #f0f0f0;
+            color: black;
+        }
+        .error-message {
+            color: red;
+            background-color: white;
+            padding: 16px;
+            text-align: center;
         }
     </style>
 </head>
