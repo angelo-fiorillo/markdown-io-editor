@@ -6,6 +6,7 @@ const copyBtn = document.getElementById('copy-btn');
 const saveImageBtn = document.getElementById('save-image-btn');
 const loadBtn = document.getElementById('load-btn');
 const saveBtn = document.getElementById('save-btn');
+const previewFrame = document.getElementById('preview-frame');
 
 function renderMarkdown() {
     let ctaButtons = '';
@@ -21,6 +22,9 @@ function renderMarkdown() {
     const htmlContent = marked(markdownInput.value);
     previewContent.innerHTML = htmlContent;
     previewButtons.innerHTML = ctaButtons;
+
+    // Aggiusta l'altezza del contenuto in base alla presenza di CTA
+    adjustContentHeight();
 }
 
 function generateCTAButtons(data) {
@@ -34,247 +38,87 @@ function generateCTAButtons(data) {
     return buttons;
 }
 
-function convertMarkdownToExport(markdown) {
-    return markdown
-        .replace(/"/g, '\\"')
-        .replace(/(?<!\n)\n(?!\n)/g, '  \\n')
-        .replace(/\n\n/g, '\\n\\n')
-        .replace(/^(#{1,6}.*?)$/gm, '$1\\n')
-        .replace(/^([*-] .*?)$/gm, '$1\\n')
-        .replace(/\n/g, '\\n');
+function adjustContentHeight() {
+    const frameHeight = previewFrame.offsetHeight;
+    const buttonsHeight = previewButtons.offsetHeight;
+    previewContent.style.height = `${frameHeight - buttonsHeight}px`;
 }
-
-function convertMarkdownFromImport(markdown) {
-    return markdown
-        .replace(/\\"(.*?)\\"/g, '"$1"')
-        .replace(/  \\n/g, '\n')
-        .replace(/\\n\\n/g, '\n\n')
-        .replace(/(#{1,6}.*?)\\n/g, '$1\n')
-        .replace(/([*-] .*?)\\n/g, '$1\n')
-        .replace(/\\n/g, '\n');
-}
-
-frontMatterInput.addEventListener('input', () => {
-    renderMarkdown();
-    localStorage.setItem('frontMatter', frontMatterInput.value);
-});
-
-markdownInput.addEventListener('input', () => {
-    renderMarkdown();
-    localStorage.setItem('markdown', markdownInput.value);
-});
-
-markdownInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-        if (e.shiftKey) {
-            e.preventDefault();
-            const start = markdownInput.selectionStart;
-            const end = markdownInput.selectionEnd;
-            const value = markdownInput.value;
-            markdownInput.value = value.substring(0, start) + '\n' + value.substring(end);
-            markdownInput.selectionStart = markdownInput.selectionEnd = start + 1;
-        } else {
-            e.preventDefault();
-            const start = markdownInput.selectionStart;
-            const end = markdownInput.selectionEnd;
-            const value = markdownInput.value;
-            markdownInput.value = value.substring(0, start) + '\n\n' + value.substring(end);
-            markdownInput.selectionStart = markdownInput.selectionEnd = start + 2;
-        }
-        renderMarkdown();
-        localStorage.setItem('markdown', markdownInput.value);
-    }
-});
 
 copyBtn.addEventListener('click', () => {
-    const fullContent = `---${convertMarkdownToExport(frontMatterInput.value)}---\\n${convertMarkdownToExport(markdownInput.value)}`;
-    navigator.clipboard.writeText(fullContent).then(() => {
-        alert('Contenuto copiato nella clipboard!');
+    const textToCopy = frontMatterInput.value + '\n---\n' + markdownInput.value;
+    navigator.clipboard.writeText(textToCopy).then(() => {
+        alert('Contenuto copiato negli appunti!');
     });
 });
 
 saveImageBtn.addEventListener('click', () => {
-    const previewFrame = document.getElementById('preview-frame');
-    const originalOverflow = previewFrame.style.overflow;
-    const originalHeight = previewFrame.style.height;
-    
-    previewFrame.style.overflow = 'visible';
-    previewFrame.style.height = 'auto';
+    // Creiamo un contenitore temporaneo per l'immagine completa
+    const tempContainer = document.createElement('div');
+    tempContainer.style.width = `${previewFrame.offsetWidth}px`;
+    tempContainer.innerHTML = previewContent.innerHTML + previewButtons.innerHTML;
+    document.body.appendChild(tempContainer);
 
-    html2canvas(previewFrame, {
-        height: previewFrame.scrollHeight,
-        windowHeight: previewFrame.scrollHeight,
-        scale: 1 / 0.3  // Inverso del fattore di scala
-    }).then(canvas => {
-        previewFrame.style.overflow = originalOverflow;
-        previewFrame.style.height = originalHeight;
-
+    html2canvas(tempContainer).then(canvas => {
         const link = document.createElement('a');
         link.download = 'preview.png';
         link.href = canvas.toDataURL();
         link.click();
+        document.body.removeChild(tempContainer);
     });
 });
 
-loadBtn.addEventListener('click', () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.md';
-    input.onchange = e => {
-        const file = e.target.files[0];
+loadBtn.addEventListener('change', (event) => {
+    const file = event.target.files[0];
+    if (file) {
         const reader = new FileReader();
-        reader.onload = event => {
-            const content = event.target.result;
-            const [, frontMatter, markdown] = content.match(/^(---\n[\s\S]*?\n---\n)?([\s\S]*)$/);
-            frontMatterInput.value = frontMatter ? convertMarkdownFromImport(frontMatter.replace(/^---\n|---\n$/g, '')) : '';
-            markdownInput.value = convertMarkdownFromImport(markdown.trim());
+        reader.onload = (e) => {
+            const content = e.target.result;
+            const [frontMatter, markdown] = content.split('---\n');
+            frontMatterInput.value = frontMatter.trim();
+            markdownInput.value = markdown.trim();
             renderMarkdown();
-            localStorage.setItem('frontMatter', frontMatterInput.value);
-            localStorage.setItem('markdown', markdownInput.value);
         };
         reader.readAsText(file);
-    };
-    input.click();
+    }
 });
 
 saveBtn.addEventListener('click', () => {
-    const content = `---${convertMarkdownToExport(frontMatterInput.value)}---\\n${convertMarkdownToExport(markdownInput.value)}`;
+    const content = frontMatterInput.value + '\n---\n' + markdownInput.value;
     const blob = new Blob([content], { type: 'text/markdown' });
     const link = document.createElement('a');
-    link.download = 'document.md';
     link.href = URL.createObjectURL(blob);
+    link.download = 'document.md';
     link.click();
 });
 
-marked.setOptions({
-    renderer: new marked.Renderer(),
-    gfm: true,
-    breaks: true,
-    highlight: function(code) {
-        return `<pre><code>${code}</code></pre>`;
+function loadSplitterPositions() {
+    const horizontalSplit = localStorage.getItem('horizontalSplit');
+    const verticalSplit = localStorage.getItem('verticalSplit');
+
+    if (horizontalSplit) {
+        document.querySelector('.horizontal').style.flexBasis = horizontalSplit;
     }
-});
-
-const renderer = new marked.Renderer();
-
-renderer.link = (href, title, text) => {
-    if (href.startsWith('iohandledlink://')) {
-        return `<a href="${href}" class="io-link">${text}</a>`;
+    if (verticalSplit) {
+        document.querySelector('.vertical').style.flexBasis = verticalSplit;
     }
-    return `<a href="${href}" target="_blank">${text}</a>`;
-};
-
-renderer.list = (body, ordered, start) => {
-    const type = ordered ? 'ol' : 'ul';
-    return `<${type} style="padding-left: 20px;">${body}</${type}>`;
-};
-
-renderer.listitem = (text) => {
-    return `<li style="margin-bottom: 5px;">${text}</li>`;
-};
-
-renderer.heading = (text, level) => {
-    const fontSize = 24 - (level * 2);
-    return `<h${level} style="font-size: ${fontSize}px; margin-top: 20px; margin-bottom: 10px;">${text}</h${level}>`;
-};
-
-marked.use({ renderer });
-
-function validateMarkdown(markdown) {
-    const warnings = [];
-    
-    if (!/^#\s.+/m.test(markdown)) {
-        warnings.push("Il documento dovrebbe iniziare con un titolo di primo livello (#).");
-    }
-
-    const lines = markdown.split('\n');
-    lines.forEach((line, index) => {
-        if (line.length > 100) {
-            warnings.push(`La riga ${index + 1} supera i 100 caratteri.`);
-        }
-    });
-
-    const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
-    let match;
-    while ((match = linkRegex.exec(markdown)) !== null) {
-        const [, text, url] = match;
-        if (!url.startsWith('https://') && !url.startsWith('iohandledlink://')) {
-            warnings.push(`Il link "${text}" non inizia con https:// o iohandledlink://.`);
-        }
-    }
-
-    return warnings;
-}
-
-// Gestione degli splitter
-const verticalSplitter = document.querySelector('.splitter.vertical');
-const horizontalSplitter = document.querySelector('.splitter.horizontal');
-const editor = document.getElementById('editor');
-const previewContainer = document.getElementById('preview-container');
-
-let isResizingVertical = false;
-let isResizingHorizontal = false;
-
-verticalSplitter.addEventListener('mousedown', (e) => {
-    isResizingVertical = true;
-    document.addEventListener('mousemove', handleVerticalResize);
-    document.addEventListener('mouseup', stopResize);
-});
-
-horizontalSplitter.addEventListener('mousedown', (e) => {
-    isResizingHorizontal = true;
-    document.addEventListener('mousemove', handleHorizontalResize);
-    document.addEventListener('mouseup', stopResize);
-});
-
-function handleVerticalResize(e) {
-    if (!isResizingVertical) return;
-    const newEditorWidth = e.clientX;
-    const maxWidth = window.innerWidth - previewContainer.offsetWidth - 20;
-    if (newEditorWidth > 300 && newEditorWidth < maxWidth) {
-        editor.style.width = `${newEditorWidth}px`;
-    }
-}
-
-function handleHorizontalResize(e) {
-    if (!isResizingHorizontal) return;
-    const editorRect = editor.getBoundingClientRect();
-    const newFrontMatterHeight = e.clientY - editorRect.top;
-    if (newFrontMatterHeight > 100 && newFrontMatterHeight < editorRect.height - 100) {
-        frontMatterInput.style.height = `${newFrontMatterHeight}px`;
-        markdownInput.style.height = `${editorRect.height - newFrontMatterHeight - 10}px`;
-    }
-}
-
-function stopResize() {
-    isResizingVertical = false;
-    isResizingHorizontal = false;
-    document.removeEventListener('mousemove', handleVerticalResize);
-    document.removeEventListener('mousemove', handleHorizontalResize);
-    saveSplitterPositions();
 }
 
 function saveSplitterPositions() {
-    localStorage.setItem('editorWidth', editor.style.width);
-    localStorage.setItem('frontMatterHeight', frontMatterInput.style.height);
-}
-
-function loadSplitterPositions() {
-    const savedEditorWidth = localStorage.getItem('editorWidth');
-    const savedFrontMatterHeight = localStorage.getItem('frontMatterHeight');
-    if (savedEditorWidth) editor.style.width = savedEditorWidth;
-    if (savedFrontMatterHeight) {
-        frontMatterInput.style.height = savedFrontMatterHeight;
-        const editorRect = editor.getBoundingClientRect();
-        markdownInput.style.height = `${editorRect.height - parseInt(savedFrontMatterHeight) - 10}px`;
-    }
+    localStorage.setItem('horizontalSplit', document.querySelector('.horizontal').style.flexBasis);
+    localStorage.setItem('verticalSplit', document.querySelector('.vertical').style.flexBasis);
 }
 
 function loadSavedContent() {
     const savedFrontMatter = localStorage.getItem('frontMatter');
     const savedMarkdown = localStorage.getItem('markdown');
+
     if (savedFrontMatter) frontMatterInput.value = savedFrontMatter;
     if (savedMarkdown) markdownInput.value = savedMarkdown;
+}
+
+function saveContent() {
+    localStorage.setItem('frontMatter', frontMatterInput.value);
+    localStorage.setItem('markdown', markdownInput.value);
 }
 
 loadSplitterPositions();
@@ -282,7 +126,17 @@ loadSavedContent();
 renderMarkdown();
 
 // Imposta le dimensioni iniziali del preview-frame
-const previewFrame = document.getElementById('preview-frame');
 const scaleFactor = 0.3;
 previewFrame.style.width = `${1080 * scaleFactor}px`;
 previewFrame.style.height = `${2340 * scaleFactor}px`;
+
+// Aggiorna il rendering quando il contenuto cambia
+frontMatterInput.addEventListener('input', renderMarkdown);
+markdownInput.addEventListener('input', renderMarkdown);
+
+// Salva il contenuto quando cambia
+frontMatterInput.addEventListener('input', saveContent);
+markdownInput.addEventListener('input', saveContent);
+
+// Gestione del ridimensionamento
+window.addEventListener('resize', adjustContentHeight);
