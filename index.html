@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editor Markdown con Anteprima</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/2.0.3/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.3.2/html2canvas.min.js"></script>
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+        #editor {
+            display: flex;
+            height: 100vh;
+        }
+        .splitter {
+            display: flex;
+            flex: 1;
+        }
+        .horizontal {
+            flex-direction: column;
+        }
+        .vertical {
+            flex-direction: row;
+        }
+        textarea {
+            resize: none;
+            border: 1px solid #ccc;
+            padding: 10px;
+            font-family: monospace;
+        }
+        #front-matter {
+            height: 20%;
+        }
+        #markdown-input {
+            height: 80%;
+        }
+        #preview-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: #f0f0f0;
+            padding: 20px;
+        }
+        #preview-frame {
+            border: 1px solid #ccc;
+            background-color: white;
+            overflow: hidden;
+        }
+        #preview-content {
+            padding: 16px;
+            font-family: 'Roboto', sans-serif;
+            font-size: 18px;
+            line-height: 1.5;
+            color: #24292e;
+            overflow-y: auto;
+        }
+        #preview-buttons {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            padding: 16px;
+            background-color: #f7f7f7;
+        }
+        .io-button {
+            display: inline-block;
+            padding: 10px 20px;
+            margin: 0 10px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: bold;
+            text-align: center;
+        }
+        .io-button-primary {
+            background-color: #0073e6;
+            color: white;
+        }
+        .io-button-secondary {
+            background-color: white;
+            color: black;
+            border: 2px solid #0073e6;
+        }
+        #controls {
+            display: flex;
+            justify-content: space-around;
+            padding: 10px;
+            background-color: #f0f0f0;
+        }
+        #controls button {
+            padding: 5px 10px;
+        }
+        .error-message {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div id="editor">
+        <div class="splitter vertical">
+            <div class="splitter horizontal">
+                <textarea id="front-matter" placeholder="Front Matter (YAML)"></textarea>
+                <textarea id="markdown-input" placeholder="Markdown"></textarea>
+            </div>
+            <div id="preview-container">
+                <div id="preview-frame">
+                    <div id="preview-content"></div>
+                    <div id="preview-buttons"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="controls">
+        <button id="copy-btn">Copia Markdown</button>
+        <button id="save-image-btn">Salva Immagine</button>
+        <input type="file" id="load-btn" accept=".md">
+        <button id="save-btn">Salva File</button>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
