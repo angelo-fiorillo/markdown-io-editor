@@ -53,6 +53,8 @@
             border: 1px solid #ccc;
             background-color: white;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
         #preview-content {
             padding: 16px;
@@ -61,22 +63,25 @@
             line-height: 1.5;
             color: #24292e;
             overflow-y: auto;
+            flex-grow: 1;
         }
         #preview-buttons {
-            width: 100%;
+            width: calc(100% - 32px);
             display: flex;
-            justify-content: center;
+            flex-direction: column;
+            align-items: center;
             padding: 16px;
             background-color: #f7f7f7;
         }
         .io-button {
             display: inline-block;
             padding: 10px 20px;
-            margin: 0 10px;
+            margin: 5px 0;
             border-radius: 4px;
             text-decoration: none;
             font-weight: bold;
             text-align: center;
+            width: 100%;
         }
         .io-button-primary {
             background-color: #0073e6;
