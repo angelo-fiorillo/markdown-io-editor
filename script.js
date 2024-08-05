@@ -19,11 +19,10 @@ function renderMarkdown() {
         console.error('Errore nel parsing del front-matter YAML:', e);
     }
     
-    const htmlContent = marked(markdownInput.value.replace(/\n{2,}/g, '</p><p>').replace(/  \n/g, '<br>'));
-    previewContent.innerHTML = `<p>${htmlContent}</p>`;
+    const htmlContent = marked(markdownInput.value);
+    previewContent.innerHTML = htmlContent;
     previewButtons.innerHTML = ctaButtons || '<div class="error-message">Errore nel front matter!</div>';
 
-    // Aggiusta l'altezza del contenuto in base alla presenza di CTA
     adjustContentHeight();
 }
 
@@ -58,14 +57,13 @@ function adjustContentHeight() {
 }
 
 copyBtn.addEventListener('click', () => {
-    const textToCopy = `---\n${frontMatterInput.value.trim()}\n---\n${formatMarkdown(markdownInput.value)}`;
+    const textToCopy = `${formatFrontMatter(frontMatterInput.value)}\n${formatMarkdown(markdownInput.value)}`;
     navigator.clipboard.writeText(textToCopy).then(() => {
         alert('Contenuto copiato negli appunti!');
     });
 });
 
 saveImageBtn.addEventListener('click', () => {
-    // Creiamo un contenitore temporaneo per l'immagine completa
     const tempContainer = document.createElement('div');
     tempContainer.style.width = `${previewFrame.offsetWidth}px`;
     tempContainer.innerHTML = previewContent.innerHTML + previewButtons.innerHTML;
@@ -88,7 +86,7 @@ loadBtn.addEventListener('change', (event) => {
             const content = e.target.result;
             const parts = content.split('---\n');
             if (parts.length >= 3) {
-                frontMatterInput.value = parts[1].trim();
+                frontMatterInput.value = unformatFrontMatter(parts[1].trim());
                 markdownInput.value = unformatMarkdown(parts.slice(2).join('---\n').trim());
             } else {
                 frontMatterInput.value = '';
@@ -101,7 +99,7 @@ loadBtn.addEventListener('change', (event) => {
 });
 
 saveBtn.addEventListener('click', () => {
-    const content = `---\n${frontMatterInput.value.trim()}\n---\n${formatMarkdown(markdownInput.value)}`;
+    const content = `${formatFrontMatter(frontMatterInput.value)}\n${formatMarkdown(markdownInput.value)}`;
     const blob = new Blob([content], { type: 'text/markdown' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
@@ -109,17 +107,28 @@ saveBtn.addEventListener('click', () => {
     link.click();
 });
 
+function formatFrontMatter(text) {
+    return `---\n${text.trim().replace(/\n/g, '\\n')}\\n---`;
+}
+
+function unformatFrontMatter(text) {
+    return text.replace(/\\n/g, '\n');
+}
+
 function formatMarkdown(text) {
     return text.replace(/"/g, '\\"')
+               .replace(/^(#{1,6} .+)$/gm, '$1\\n')  // Titoli
+               .replace(/^([*+-] .+)$/gm, '$1\\n')   // Bullet points
                .replace(/\n{2,}/g, '\\n\\n')
-               .replace(/  \n/g, '  \\n')
+               .replace(/  \n/g, ' \\n')
                .replace(/\n/g, ' ');
 }
 
 function unformatMarkdown(text) {
     return text.replace(/\\"/g, '"')
                .replace(/\\n\\n/g, '\n\n')
-               .replace(/  \\n/g, '  \n');
+               .replace(/ \\n/g, '  \n')
+               .replace(/([^\\])\n/g, '$1 ');
 }
 
 function loadSplitterPositions() {
@@ -156,33 +165,33 @@ loadSplitterPositions();
 loadSavedContent();
 renderMarkdown();
 
-// Imposta le dimensioni iniziali del preview-frame
 const scaleFactor = 0.3;
 previewFrame.style.width = `${1080 * scaleFactor}px`;
 previewFrame.style.height = `${2340 * scaleFactor}px`;
 
-// Aggiorna il rendering quando il contenuto cambia
 frontMatterInput.addEventListener('input', renderMarkdown);
 markdownInput.addEventListener('input', renderMarkdown);
 
-// Salva il contenuto quando cambia
 frontMatterInput.addEventListener('input', saveContent);
 markdownInput.addEventListener('input', saveContent);
 
-// Gestione del ridimensionamento
 window.addEventListener('resize', adjustContentHeight);
 
-// Gestione degli "a-capo"
 markdownInput.addEventListener('keydown', function(e) {
     if (e.key === 'Enter') {
-        if (!e.shiftKey) {
-            e.preventDefault();
-            const start = this.selectionStart;
-            const end = this.selectionEnd;
-            const value = this.value;
+        const start = this.selectionStart;
+        const end = this.selectionEnd;
+        const value = this.value;
+        if (e.shiftKey) {
+            // Inserisci un a-capo semplice (due spazi e un newline)
+            this.value = value.slice(0, start) + '  \n' + value.slice(end);
+            this.selectionStart = this.selectionEnd = start + 3;
+        } else {
+            // Inserisci un a-capo con nuovo paragrafo
             this.value = value.slice(0, start) + '\n\n' + value.slice(end);
             this.selectionStart = this.selectionEnd = start + 2;
-            renderMarkdown();
         }
+        e.preventDefault();
+        renderMarkdown();
     }
 });
