@@ -84,12 +84,10 @@ loadBtn.addEventListener('change', (event) => {
         const reader = new FileReader();
         reader.onload = (e) => {
             const content = e.target.result;
-            const parts = content.split('\\n---\\n');
-            alert(parts.length);
-            if (parts.length == 2) {
-                frontMatterInput.value = unformatFrontMatter(parts[0].trim());
-                // markdownInput.value = unformatMarkdown(parts.slice(2).join('\n---\n').trim());
-                markdownInput.value = unformatMarkdown(parts[1].trim());
+            const parts = content.split('---\n');
+            if (parts.length >= 3) {
+                frontMatterInput.value = unformatFrontMatter(parts[1].trim());
+                markdownInput.value = unformatMarkdown(parts.slice(2).join('---\n').trim());
             } else {
                 frontMatterInput.value = '';
                 markdownInput.value = unformatMarkdown(content.trim());
