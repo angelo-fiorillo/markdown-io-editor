@@ -16,7 +16,6 @@
         }
         #editor {
             display: flex;
-            flex-direction: column;
             height: 100vh;
         }
         .splitter {
@@ -105,11 +104,11 @@
 </head>
 <body>
     <div id="editor">
-        <div class="splitter horizontal">
-            <textarea id="front-matter" placeholder="Front Matter (YAML)"></textarea>
-            <textarea id="markdown-input" placeholder="Markdown"></textarea>
-        </div>
         <div class="splitter vertical">
+            <div class="splitter horizontal">
+                <textarea id="front-matter" placeholder="Front Matter (YAML)"></textarea>
+                <textarea id="markdown-input" placeholder="Markdown"></textarea>
+            </div>
             <div id="preview-container">
                 <div id="preview-frame">
                     <div id="preview-content"></div>
