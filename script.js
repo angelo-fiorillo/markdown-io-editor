@@ -89,12 +89,12 @@ loadBtn.addEventListener('change', (event) => {
             if (parts.length > 1) {
                 // Il file contiene front matter
                 let frontMatter = parts[0].replace(/^---\n/, '');
-                frontMatterInput.value = frontMatter.trim();
-                markdownInput.value = parts.slice(1).join('\n---\n').trim();
+                frontMatterInput.value = unformatFrontMatter(frontMatter.trim());
+                markdownInput.value = unformatMarkdown(parts.slice(1).join('\n---\n').trim());
             } else {
                 // Il file non contiene front matter
                 frontMatterInput.value = '';
-                markdownInput.value = content.trim();
+                markdownInput.value = unformatMarkdown(content.trim());
             }
             renderMarkdown();
         };
