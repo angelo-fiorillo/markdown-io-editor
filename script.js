@@ -84,11 +84,13 @@ loadBtn.addEventListener('change', (event) => {
         const reader = new FileReader();
         reader.onload = (e) => {
             const content = e.target.result;
-            const parts = content.split('---\n');
+            const parts = content.split(/---\n/);
             if (parts.length >= 3) {
+                // Il file contiene front matter
                 frontMatterInput.value = unformatFrontMatter(parts[1].trim());
                 markdownInput.value = unformatMarkdown(parts.slice(2).join('---\n').trim());
             } else {
+                // Il file non contiene front matter
                 frontMatterInput.value = '';
                 markdownInput.value = unformatMarkdown(content.trim());
             }
