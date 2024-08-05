@@ -36,22 +36,22 @@ function generateCTAButtons(data) {
 
 function convertMarkdownToExport(markdown) {
     return markdown
-        .replace(/"/g, '\\"') // Escape delle doppie virgolette
+        .replace(/"/g, '\\"')
         .replace(/(?<!\n)\n(?!\n)/g, '  \\n')
         .replace(/\n\n/g, '\\n\\n')
-        .replace(/^(#{1,6}.*?)$/gm, '$1\\n') // Aggiunge \n alla fine dei titoli
-        .replace(/^([*-] .*?)$/gm, '$1\\n') // Aggiunge \n alla fine dei bullet points
-        .replace(/\n/g, '\\n'); // Converte tutti i newline rimanenti in \n
+        .replace(/^(#{1,6}.*?)$/gm, '$1\\n')
+        .replace(/^([*-] .*?)$/gm, '$1\\n')
+        .replace(/\n/g, '\\n');
 }
 
 function convertMarkdownFromImport(markdown) {
     return markdown
-        .replace(/\\"(.*?)\\"/g, '"$1"') // Rimuove l'escape dalle doppie virgolette
+        .replace(/\\"(.*?)\\"/g, '"$1"')
         .replace(/  \\n/g, '\n')
         .replace(/\\n\\n/g, '\n\n')
-        .replace(/(#{1,6}.*?)\\n/g, '$1\n') // Rimuove \n alla fine dei titoli
-        .replace(/([*-] .*?)\\n/g, '$1\n') // Rimuove \n alla fine dei bullet points
-        .replace(/\\n/g, '\n'); // Converte tutti i \n rimanenti in newline effettivi
+        .replace(/(#{1,6}.*?)\\n/g, '$1\n')
+        .replace(/([*-] .*?)\\n/g, '$1\n')
+        .replace(/\\n/g, '\n');
 }
 
 frontMatterInput.addEventListener('input', () => {
@@ -67,7 +67,6 @@ markdownInput.addEventListener('input', () => {
 markdownInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
         if (e.shiftKey) {
-            // Shift+Enter: inserisce un a-capo semplice
             e.preventDefault();
             const start = markdownInput.selectionStart;
             const end = markdownInput.selectionEnd;
@@ -75,7 +74,6 @@ markdownInput.addEventListener('keydown', (e) => {
             markdownInput.value = value.substring(0, start) + '\n' + value.substring(end);
             markdownInput.selectionStart = markdownInput.selectionEnd = start + 1;
         } else {
-            // Enter: inserisce un a-capo con nuovo paragrafo
             e.preventDefault();
             const start = markdownInput.selectionStart;
             const end = markdownInput.selectionEnd;
@@ -100,15 +98,14 @@ saveImageBtn.addEventListener('click', () => {
     const originalOverflow = previewFrame.style.overflow;
     const originalHeight = previewFrame.style.height;
     
-    // Rimuovi temporaneamente la scrollbar e imposta l'altezza al contenuto completo
     previewFrame.style.overflow = 'visible';
     previewFrame.style.height = 'auto';
 
     html2canvas(previewFrame, {
         height: previewFrame.scrollHeight,
-        windowHeight: previewFrame.scrollHeight
+        windowHeight: previewFrame.scrollHeight,
+        scale: 1 / 0.3  // Inverso del fattore di scala
     }).then(canvas => {
-        // Ripristina le proprietà originali
         previewFrame.style.overflow = originalOverflow;
         previewFrame.style.height = originalHeight;
 
@@ -233,7 +230,7 @@ horizontalSplitter.addEventListener('mousedown', (e) => {
 function handleVerticalResize(e) {
     if (!isResizingVertical) return;
     const newEditorWidth = e.clientX;
-    const maxWidth = window.innerWidth - previewContainer.offsetWidth - 20; // 20px di margine
+    const maxWidth = window.innerWidth - previewContainer.offsetWidth - 20;
     if (newEditorWidth > 300 && newEditorWidth < maxWidth) {
         editor.style.width = `${newEditorWidth}px`;
     }
@@ -245,7 +242,7 @@ function handleHorizontalResize(e) {
     const newFrontMatterHeight = e.clientY - editorRect.top;
     if (newFrontMatterHeight > 100 && newFrontMatterHeight < editorRect.height - 100) {
         frontMatterInput.style.height = `${newFrontMatterHeight}px`;
-        markdownInput.style.height = `${editorRect.height - newFrontMatterHeight - 10}px`; // 10px per lo splitter
+        markdownInput.style.height = `${editorRect.height - newFrontMatterHeight - 10}px`;
     }
 }
 
