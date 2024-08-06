@@ -84,7 +84,7 @@ loadBtn.addEventListener('change', (event) => {
         const reader = new FileReader();
         reader.onload = (e) => {
             const content = e.target.result;
-            const parts = content.split('\\n---\\n');
+            const parts = content.split(`\n---\n`);
             
             if (parts.length > 1) {
                 // Il file contiene front matter
