@@ -55,16 +55,19 @@ function generateCTAButton(cta, type) {
 function adjustContentHeight() {
     const frameHeight = previewFrame.offsetHeight;
     const buttonsHeight = previewButtons.offsetHeight;
-    const margin = 20; // Margine desiderato dal bordo inferiore
+    const margin = 20; // Margine desiderato dal bordo inferiore e superiore
 
-    // Imposta l'altezza del contenuto lasciando spazio per i bottoni e il margine
-    previewContent.style.height = `${frameHeight - buttonsHeight - margin}px`;
+    // Imposta l'altezza del contenuto lasciando spazio per i bottoni e i margini
+    previewContent.style.height = `${frameHeight - buttonsHeight - (margin * 2)}px`;
     
     // Posiziona i bottoni in basso con il margine desiderato
     previewButtons.style.position = 'absolute';
     previewButtons.style.bottom = `${margin}px`;
     previewButtons.style.left = '0';
     previewButtons.style.right = '0';
+    
+    // Aggiungi padding superiore ai bottoni
+    previewButtons.style.paddingTop = `${margin}px`;
 }
 
 copyBtn.addEventListener('click', () => {
