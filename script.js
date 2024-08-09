@@ -84,15 +84,17 @@ loadBtn.addEventListener('change', (event) => {
         const reader = new FileReader();
         reader.onload = (e) => {
             const content = e.target.result;
-            const parts = content.split(`\n---\n`);
+            // Usiamo una regex per trovare il front matter
+            const frontMatterRegex = /^---\\n([\s\S]*?)\\n---\\n/;
+            const match = content.match(frontMatterRegex);
             
-            if (parts.length > 1) {
-                // Il file contiene front matter
-                let frontMatter = parts[0].replace(/^---\\n/, '');
+            if (match) {
+                // Se c'è un front matter
+                let frontMatter = match[1];
                 frontMatterInput.value = unformatFrontMatter(frontMatter.trim());
-                markdownInput.value = unformatMarkdown(parts.slice(1).join('\\n---\\n').trim());
+                markdownInput.value = unformatMarkdown(content.slice(match[0].length).trim());
             } else {
-                // Il file non contiene front matter
+                // Se non c'è front matter
                 frontMatterInput.value = '';
                 markdownInput.value = unformatMarkdown(content.trim());
             }
