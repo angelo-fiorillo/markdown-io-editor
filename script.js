@@ -8,8 +8,6 @@ const loadBtn = document.getElementById('load-btn');
 const saveBtn = document.getElementById('save-btn');
 const previewFrame = document.getElementById('preview-frame');
 
-previewFrame.style.position = 'relative';
-
 function renderMarkdown() {
     let ctaButtons = '';
     try {
@@ -55,19 +53,7 @@ function generateCTAButton(cta, type) {
 function adjustContentHeight() {
     const frameHeight = previewFrame.offsetHeight;
     const buttonsHeight = previewButtons.offsetHeight;
-    const margin = 20; // Margine desiderato dal bordo inferiore e superiore
-
-    // Imposta l'altezza del contenuto lasciando spazio per i bottoni e i margini
-    previewContent.style.height = `${frameHeight - buttonsHeight - (margin * 2)}px`;
-    
-    // Posiziona i bottoni in basso con il margine desiderato
-    previewButtons.style.position = 'absolute';
-    previewButtons.style.bottom = `${margin}px`;
-    previewButtons.style.left = '0';
-    previewButtons.style.right = '0';
-    
-    // Aggiungi padding superiore ai bottoni
-    previewButtons.style.paddingTop = `${margin}px`;
+    previewContent.style.height = `${frameHeight - buttonsHeight}px`;
 }
 
 copyBtn.addEventListener('click', () => {
@@ -222,7 +208,3 @@ markdownInput.addEventListener('keydown', function(e) {
         renderMarkdown();
     }
 });
-
-window.addEventListener('resize', adjustContentHeight);
-frontMatterInput.addEventListener('input', adjustContentHeight);
-markdownInput.addEventListener('input', adjustContentHeight);
